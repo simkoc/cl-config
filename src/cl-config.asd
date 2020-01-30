@@ -2,4 +2,4 @@
   :author "Simon Koch <projects@halcony.de>"
   :components ((:file "package")
                (:file "config"
-                      :export "package")))
+                      :depends-on ("package"))))

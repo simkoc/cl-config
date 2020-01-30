@@ -10,10 +10,23 @@
   (string-trim '(#\SPACE #\TAB) string))
 
 
+(defmethod print-object ((manager config-manager) stream)
+  (mapcar (lambda (section)
+            (format stream "[~a]~%" section)
+            (let ((table (gethash section (slot-value manager 'config-table))))
+              (mapcar (lambda (key)
+                        (format stream "~a=~a~%" key (gethash key table)))
+                      (loop for key being the hash-keys of table collect key)))
+            (format stream  "~%"))
+          (loop for key being the hash-keys of (slot-value manager 'config-table) collect key)))
+
+
 (defmethod enter-value ((cm config-manager) section key value)
-  (let ((section (trim-string section))
+  (let ((section (string-downcase (trim-string section)))
         (key (trim-string key))
-        (value (trim-string value)))
+        (value (if (stringp value)
+                   (trim-string value)
+                   value)))
     (with-slots (config-table)
         cm
       (let ((section-table (gethash section config-table)))
@@ -51,7 +64,7 @@
                      (string= last "]"))
                 (setf current-section (subseq trimmed-line 1 (- (length trimmed-line) 1)))
                 (let ((split (cons (subseq trimmed-line 0 (position #\= trimmed-line :test #'char=))
-                                   (subseq trimmed-line (+ (position #\= trimmed-line :test #'char=) 2)))))
+                                   (subseq trimmed-line (+ (position #\= trimmed-line :test #'char=) 1)))))
                   (assert (and (not (string= (car split) ""))
                                (not (string= (cdr split) ""))))
                   (enter-value config-manager current-section (car split) (cdr split))))))))))
